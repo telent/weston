@@ -127,6 +127,10 @@ if test x$enable_xwayland = xyes; then
   fi
 fi
 
+AC_ARG_WITH(duktape-path, AS_HELP_STRING([--with-duktape-path=PATH],
+                          [Path to duktape installation]), [DUKTAPE_PATH="$withval"])
+AC_SUBST([DUKTAPE_PATH])
+
 PKG_CHECK_MODULES(LIBDRM, [libdrm],
                   [AC_DEFINE(HAVE_LIBDRM, 1, [Define if libdrm is available]) have_libdrm=yes], have_libdrm=no)
 
@@ -327,6 +331,7 @@ AM_CONDITIONAL(BUILD_SIMPLE_CLIENTS, test "x$enable_simple_clients" = "xyes")
 if test x$enable_simple_clients = xyes; then
   PKG_CHECK_MODULES(SIMPLE_CLIENT, [wayland-client])
 fi
+
 
 AC_ARG_ENABLE(simple-egl-clients,
               AS_HELP_STRING([--disable-simple-egl-clients],

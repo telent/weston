@@ -8,6 +8,8 @@ module_LTLIBRARIES =
 noinst_LTLIBRARIES =
 BUILT_SOURCES =
 
+DUKTAPE_PATH=@DUKTAPE_PATH@
+
 AM_DISTCHECK_CONFIGURE_FLAGS = --disable-setuid-install
 
 EXTRA_DIST = weston.ini.in ivi-shell/weston.ini.in
@@ -61,11 +63,14 @@ CLEANFILES = weston.ini				\
 
 bin_PROGRAMS += weston
 
-weston_LDFLAGS = -export-dynamic
+weston_LDFLAGS = -export-dynamic \
+	-L$(DUKTAPE_PATH)/lib \
+	-Wl,-rpath -Wl,$(DUKTAPE_PATH)/lib
 weston_CPPFLAGS = $(AM_CPPFLAGS) -DIN_WESTON
-weston_CFLAGS = $(AM_CFLAGS) $(COMPOSITOR_CFLAGS) $(LIBUNWIND_CFLAGS)
+weston_CFLAGS = $(AM_CFLAGS) $(COMPOSITOR_CFLAGS) $(LIBUNWIND_CFLAGS) \
+	-I$(DUKTAPE_PATH)/include
 weston_LDADD = $(COMPOSITOR_LIBS) $(LIBUNWIND_LIBS) \
-	$(DLOPEN_LIBS) -lm libshared.la
+	$(DLOPEN_LIBS) -lduktape -lm libshared.la
 
 weston_SOURCES =					\
 	src/git-version.h				\
@@ -86,6 +91,7 @@ weston_SOURCES =					\
 	src/timeline.c					\
 	src/timeline.h					\
 	src/timeline-object.h				\
+	src/js.c					\
 	src/main.c					\
 	src/linux-dmabuf.c				\
 	src/linux-dmabuf.h				\
