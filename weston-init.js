@@ -12,3 +12,8 @@ function bind_key(mods, keysym, fun) {
 bind_key(["Ctrl", "Meta"], "7", function beep(e) { print(e); });
 bind_key(["Ctrl", "Meta"], "8", function burp(e) { print(e); });
 print(weston.keymap);
+
+weston.runKeyBinding = function find_key_binding(key, modifiers) {
+    print("lookup ",key, " ", modifiers);
+    return false;
+}

@@ -28,8 +28,13 @@ int js_run_key_binding(struct weston_keyboard *keyboard,
                        uint32_t time,
                        uint32_t key,
                        enum weston_keyboard_modifier modifier) {
-        fprintf(stderr, "looking for js key binding %d %d %d\n",
-                time, key, modifier);
+        duk_push_global_object(ctx);
+        duk_get_prop_string(ctx, -1, "runKeyBinding");
+        duk_push_uint(ctx, key);
+        duk_push_int(ctx, (int) modifier);
+        if(duk_pcall(ctx, 2) != 0) {
+          fprintf(stderr, "error: %s", duk_safe_to_string(ctx, -1));
+        }
         return 0;
 }
 
