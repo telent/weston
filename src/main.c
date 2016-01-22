@@ -47,7 +47,7 @@
 #include "git-version.h"
 #include "version.h"
 
-#include "duktape.h"
+#include "js.h"
 
 static struct wl_list child_process_list;
 static struct weston_compositor *segv_compositor;
@@ -695,7 +695,7 @@ int main(int argc, char *argv[])
 	log_uname();
 
         duk_init();
-        
+
 	verify_xdg_runtime_dir();
 
 	display = wl_display_create();
