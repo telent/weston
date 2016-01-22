@@ -24,8 +24,8 @@ when do we run js functions?
 
 static duk_context *ctx;
 
-int js_run_key_binding(struct weston_keyboard *keyboard, 
-                       uint32_t time, 
+int js_run_key_binding(struct weston_keyboard *keyboard,
+                       uint32_t time,
                        uint32_t key,
                        enum weston_keyboard_modifier modifier) {
         fprintf(stderr, "looking for js key binding %d %d %d\n",
