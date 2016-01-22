@@ -21,16 +21,20 @@ when do we run js functions?
 static int bind_key_event(duk_context *ctx) {
 	int i;
 	// int n = duk_get_top(ctx);  /* #args */
+#include "js.h"
 
         const char *keysym = duk_safe_to_string(ctx, 0);
         const char *defn = duk_safe_to_string(ctx, 1);
         fprintf(stderr, "bound %s to %s\n", keysym, defn);
 	duk_push_number(ctx, 42);
 	return 1;  /* one return value */
+static duk_context *ctx;
+
 }
 
-duk_context *duk_init() {
-        duk_context *ctx = duk_create_heap_default();
+
+void duk_init(void) {
+        ctx = duk_create_heap_default();
         duk_eval_string(ctx, "print('Hello world!');");
         
         duk_push_global_object(ctx);
@@ -42,7 +46,5 @@ duk_context *duk_init() {
                 printf("Error: %s\n", duk_safe_to_string(ctx, -1));
         }
         duk_pop(ctx);  /* ignore result */
-        
-        return ctx;
 }
 

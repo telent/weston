@@ -661,8 +661,6 @@ int main(int argc, char *argv[])
 	struct wl_listener primary_client_destroyed;
 	struct weston_seat *seat;
 
-        struct duk_context *duk_context;
-        
 	const struct weston_option core_options[] = {
 		{ WESTON_OPTION_STRING, "backend", 'B', &backend },
 		{ WESTON_OPTION_STRING, "shell", 0, &shell },
@@ -696,7 +694,7 @@ int main(int argc, char *argv[])
 		   BUILD_ID);
 	log_uname();
 
-        duk_context = duk_init();
+        duk_init();
         
 	verify_xdg_runtime_dir();
 
