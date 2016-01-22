@@ -18,10 +18,15 @@ let
       mkdir -p $out/bin $out/lib $out/include
     '';
   };
+  immutableJs = fetchurl {
+    url = "https://raw.githubusercontent.com/facebook/immutable-js/d94141223d56ac5bd6f541b06baa3161c4edd01b/dist/immutable.js";
+    sha256 = "158qq08v4rkj85yjbz5xaw645761zzgz6rn3fvy8ci5fwi8jkxf0";
+  };
 in rec {
   env = stdenv.lib.overrideDerivation weston (o: {
     name = "weston-env";
     preConfigure = "./autogen.sh NOCONFIGURE=1";
+    IMMUTABLE_JS = "${immutableJs}";
     configureFlags = "--with-duktape-path=${duktape}";
     buildInputs = o.buildInputs ++
        [  automake pkgconfig libtool m4 autoconf duktape
