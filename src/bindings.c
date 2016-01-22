@@ -31,6 +31,8 @@
 #include "compositor.h"
 #include "shared/helpers.h"
 
+#include "js.h"
+
 struct weston_binding {
 	uint32_t key;
 	uint32_t button;
@@ -278,6 +280,20 @@ install_binding_grab(struct weston_keyboard *keyboard, uint32_t time,
 	}
 }
 
+static void swallow_key_press(struct weston_keyboard *keyboard,
+                              uint32_t time, uint32_t key,
+                              struct weston_surface *focus) {
+  /* If this was a key binding and it didn't
+   * install a keyboard grab, install one now to
+   * swallow the key press. */
+  if (keyboard->grab ==
+      &keyboard->default_grab)
+    install_binding_grab(keyboard,
+                         time,
+                         key,
+                         focus);
+}
+
 void
 weston_compositor_run_key_binding(struct weston_compositor *compositor,
 				  struct weston_keyboard *keyboard,
@@ -295,21 +311,21 @@ weston_compositor_run_key_binding(struct weston_compositor *compositor,
 	wl_list_for_each(b, &compositor->modifier_binding_list, link)
 		b->key = key;
 
-	wl_list_for_each_safe(b, tmp, &compositor->key_binding_list, link) {
+        /* try the js bindings first */
+        focus = keyboard->focus;
+        if(js_run_key_binding(keyboard, time, key, seat->modifier_state)) {
+                swallow_key_press(keyboard, time, key, focus);
+                return;
+        }
+
+        /* if nothing found there, fall back to hardcoded bindings */
+        wl_list_for_each_safe(b, tmp, &compositor->key_binding_list, link) {
 		if (b->key == key && b->modifier == seat->modifier_state) {
 			weston_key_binding_handler_t handler = b->handler;
+                        /* can anyone explain why we do this in the loop? */
 			focus = keyboard->focus;
 			handler(keyboard, time, key, b->data);
-
-			/* If this was a key binding and it didn't
-			 * install a keyboard grab, install one now to
-			 * swallow the key press. */
-			if (keyboard->grab ==
-			    &keyboard->default_grab)
-				install_binding_grab(keyboard,
-						     time,
-						     key,
-						     focus);
+                        swallow_key_press(keyboard, time, key, focus);
 		}
 	}
 }

@@ -17,11 +17,19 @@ when do we run js functions?
 
 
 #include "duktape.h"
+#include "compositor.h"
 
 #include "js.h"
 
 static duk_context *ctx;
 
+int js_run_key_binding(struct weston_keyboard *keyboard, 
+                       uint32_t time, 
+                       uint32_t key,
+                       enum weston_keyboard_modifier modifier) {
+        fprintf(stderr, "looking for js key binding %d %d %d\n",
+                time, key, modifier);
+        return 0;
 }
 
 
