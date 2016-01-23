@@ -24,15 +24,39 @@ when do we run js functions?
 
 static duk_context *ctx;
 
+/*
+when we bind the key we can use
+
+(gdb) p xkb_keysym_from_name("x", 0)
+$12 = 120
+(gdb) p xkb_keysym_from_name("Escape", 0)
+$17 = 65307
+
+
+to convert a keysym name into a numeric keysym.  But the events that
+come off the keyboard have keycodes not keysyms, and the mapping
+from one to the other may change dynamically.  What happens if you
+switch from one layout to another and your Super-X binding moves?
+Persumably if you specified it as Super-X you want it also to
+move, whereas if you looked up the keycode and did the binding that
+way then you don't
+
+
+ */
+
+
 int js_run_key_binding(struct weston_keyboard *keyboard,
                        uint32_t time,
                        uint32_t key,
                        enum weston_keyboard_modifier modifier) {
+        int keysym = xkb_state_key_get_one_sym(keyboard ->xkb_state.state, key);
+
         duk_push_global_object(ctx);
         duk_get_prop_string(ctx, -1, "runKeyBinding");
         duk_push_uint(ctx, key);
+        duk_push_uint(ctx, keysym);
         duk_push_int(ctx, (int) modifier);
-        if(duk_pcall(ctx, 2) != 0) {
+        if(duk_pcall(ctx, 3) != 0) {
           fprintf(stderr, "error: %s", duk_safe_to_string(ctx, -1));
         }
         return 0;

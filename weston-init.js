@@ -13,7 +13,7 @@ bind_key(["Ctrl", "Meta"], "7", function beep(e) { print(e); });
 bind_key(["Ctrl", "Meta"], "8", function burp(e) { print(e); });
 print(weston.keymap);
 
-weston.runKeyBinding = function find_key_binding(key, modifiers) {
-    print("lookup ",key, " ", modifiers);
+weston.runKeyBinding = function find_key_binding(keycode, keysym, modifiers) {
+    print("lookup ",keycode, " ", keysym, " ", modifiers);
     return false;
 }
