@@ -1,4 +1,4 @@
-/* JS support in maxwell
+/* Spaghetti Weston: drive your window mnager with javascript
 
 use cases: what do we actually want to use js for?
 
@@ -12,6 +12,8 @@ when do we run js functions?
 - evaluate a js script at startup to set defaults
 - interactive js eval for side-effects/debugging (open a socket?)
 - bind js functions to events
+- is there any mileage in react-style diffing between current and desired
+   window configuration?
 
 */
 
@@ -37,10 +39,11 @@ to convert a keysym name into a numeric keysym.  But the events that
 come off the keyboard have keycodes not keysyms, and the mapping
 from one to the other may change dynamically.  What happens if you
 switch from one layout to another and your Super-X binding moves?
-Persumably if you specified it as Super-X you want it also to
+Presumably if you specified it as Super-X you want it also to
 move, whereas if you looked up the keycode and did the binding that
 way then you don't
 
+Modifiers in weston are hardcoded: ctrl=1, alt=2, super=4, shift=8
 
  */
 
@@ -81,6 +84,13 @@ static int env_lookup(duk_context *ctx) {
         return 1;
 }
 
+static int keysym_from_name(duk_context *ctx) {
+  const char *name = duk_safe_to_string(ctx, 0);
+  duk_push_number(ctx, xkb_keysym_from_name(name, /* flags */ 0));
+  return 1;
+}
+
+
 
 void duk_init(void) {
         ctx = duk_create_heap_default();
@@ -90,6 +100,8 @@ void duk_init(void) {
         duk_put_prop_string(ctx, -2, "load_file");
         duk_push_c_function(ctx, env_lookup, 1);
         duk_put_prop_string(ctx, -2, "getenv");
+        duk_push_c_function(ctx, keysym_from_name, 1);
+        duk_put_prop_string(ctx, -2, "keysym_from_name");
         duk_pop(ctx);  /* pop global */
 
         if (duk_peval_file(ctx, "weston-init.js") != 0) {
