@@ -30,6 +30,7 @@ in rec {
     configureFlags = "--with-duktape-path=${duktape}";
     buildInputs = o.buildInputs ++
        [  automake pkgconfig libtool m4 autoconf duktape
-        ];
+          gdb
+       ];
   });
 }
