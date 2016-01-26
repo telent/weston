@@ -52,7 +52,11 @@ int js_run_key_binding(struct weston_keyboard *keyboard,
                        uint32_t time,
                        uint32_t key,
                        enum weston_keyboard_modifier modifier) {
-        int keysym = xkb_state_key_get_one_sym(keyboard ->xkb_state.state, key);
+        // key is a evdev keycode as seen in uevent.h, meaning we have to
+        // add 8 to make it an X11 keycode for use with xkb
+
+        int keysym = xkb_state_key_get_one_sym(keyboard->xkb_state.state,
+                                               key+8);
 
         duk_push_global_object(ctx);
         duk_get_prop_string(ctx, -1, "runKeyBinding");
