@@ -3,7 +3,9 @@ print('hello from weston-init');
 load_file(getenv("IMMUTABLE_JS"));
 
 var weston = Function('return this')();
-weston.keymap = Immutable.Map({"fgr":"dfhsgfh!"});
+weston.keymap = Immutable.Map({});
+
+KeySpec = Immutable.Record({modifiers: 0, keysym: null});
 
 function convert_keyname(keyname) {
     keyname = Immutable.List(keyname);
@@ -16,25 +18,25 @@ function convert_keyname(keyname) {
             'super': 4
         }[n.toLowerCase()])
     }, 0);
-    return [mods, keysym];
+    return new KeySpec({modifiers: mods, keysym: keysym});
 }
 
-function bind_key(keynames, fun) {
-    // weston.keymap = weston.keymap.set(keynames, fun);
+function bind_key(keyname, fun) {
+    weston.keymap = weston.keymap.set(convert_keyname(keyname), fun);
 }
-
-bind_key(["Ctrl", "Meta", "7"], function beep(e) { print(e); });
-bind_key(["Ctrl", "Meta", "8"], function burp(e) { print(e); });
-bind_key(["Ctrl", "Meta", "F1"], function barf(e) { print(e); });
-print(weston.keymap);
-
-print(convert_keyname(["Ctrl","Alt","F1"]));
-print(convert_keyname(["Ctrl","Alt","F1"]));
-print(convert_keyname(["Super","Left"]));
-print(convert_keyname(["Shift","8"]));
-
 
 weston.runKeyBinding = function find_key_binding(keycode, keysym, modifiers) {
     print("lookup ",keycode, " ", keysym, " ", modifiers);
+    var ks = new KeySpec({keysym: keysym, modifiers: modifiers})
+    var handler = weston.keymap.get(ks);
+    if(handler){
+        print("got", handler);
+    }
     return false;
 }
+
+bind_key(["Ctrl", "alt", "7"], function beep(e) { print(e); });
+bind_key(["Ctrl", "alt", "8"], function burp(e) { print(e); });
+bind_key(["Ctrl", "alt", "0"], function barf(e) { print(e); });
+bind_key(["Ctrl", "alt", "q"], function barf(e) { print(e); });
+print(weston.keymap);
