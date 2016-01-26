@@ -1,13 +1,20 @@
+// at some point we will split this into
+// - core.js which is supplied with the software
+// - user.js (or weston.d/*.js) which is user customizations
+
 print('hello from weston-init');
-// download immutable.js from somewhere and point this environment var at it
+
+// download immutable.js from somewhere and point this environment var at it.
+// probably eventually we will use some kind of tool to bundle core.js
+// and immutable together
 load_file(getenv("IMMUTABLE_JS"));
 
 var weston = Function('return this')();
-weston.keymap = Immutable.Map({});
 
+weston.keymap = Immutable.Map({});
 KeySpec = Immutable.Record({modifiers: 0, keysym: null});
 
-function convert_keyname(keyname) {
+function keySpecForName(keyname) {
     keyname = Immutable.List(keyname);
     var keysym = keysym_from_name(keyname.last());
     var mods = keyname.pop().reduce(function (mods,n) {
@@ -21,10 +28,16 @@ function convert_keyname(keyname) {
     return new KeySpec({modifiers: mods, keysym: keysym});
 }
 
-function bind_key(keyname, fun) {
-    weston.keymap = weston.keymap.set(convert_keyname(keyname), fun);
+// in time I expect we will want more than one keymap (perhaps e.g.
+// some keys are only active over the background and are otherwise
+// sent to client windows.  Or perhaps we go Full Emacs and have
+// prefix keymaps)
+weston.bindKey = function bind_key(keyname, fun) {
+    weston.keymap = weston.keymap.set(keySpecForName(keyname), fun);
 }
 
+// do not change the name of this without changing the C code that
+// calls it
 weston.runKeyBinding = function find_key_binding(keycode, keysym, modifiers) {
     print("lookup ",keycode, " ", keysym, " ", modifiers);
     var ks = new KeySpec({keysym: keysym, modifiers: modifiers})
