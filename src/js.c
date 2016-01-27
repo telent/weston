@@ -19,6 +19,11 @@ when do we run js functions?
 
 #include <stdlib.h>
 
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+
+
 #include "duktape.h"
 #include "compositor.h"
 
@@ -112,4 +117,96 @@ void duk_init(void) {
                 printf("Error: %s\n", duk_safe_to_string(ctx, -1));
         }
         duk_pop(ctx);  /* ignore result */
+}
+
+static int
+open_repl_unix_socket(void)
+{
+        /* this is a straight copy of bind_to_unix_socket in
+         * xwayland/launcher.c */
+
+        struct sockaddr_un addr;
+        socklen_t size, name_size;
+        int fd;
+        char *path = "/tmp/weston-js.sock";
+
+        fd = socket(PF_LOCAL, SOCK_STREAM | SOCK_CLOEXEC, 0);
+        if (fd < 0)
+                return -1;
+
+        addr.sun_family = AF_LOCAL;
+        name_size = snprintf(addr.sun_path, sizeof addr.sun_path, path) + 1;
+        size = offsetof(struct sockaddr_un, sun_path) + name_size;
+        unlink(addr.sun_path);
+        if (bind(fd, (struct sockaddr *) &addr, size) < 0) {
+                weston_log("failed to bind to %s: %m\n", addr.sun_path);
+                close(fd);
+                return -1;
+        }
+        if (listen(fd, 1) < 0) {
+                unlink(addr.sun_path);
+                close(fd);
+                return -1;
+        }
+
+        return fd;
+}
+
+struct sock_callback_data {
+        struct wl_event_loop *loop;
+        struct wl_event_source *source;
+        int fd;
+};
+
+static int process_repl_connected_socket(int fd, uint32_t mask, void *data) {
+        char buf[1000];
+        int bytes=1;
+        struct sock_callback_data *cb_data = (struct sock_callback_data *) data;
+        bytes = read(fd, buf, (sizeof buf));
+        if(bytes>0) {
+                fprintf(stderr, "<< %.*s", bytes, buf);
+                return 1;
+        } else {
+                /* when connection closed, need to remove this fd from
+                   event loop */
+                wl_event_source_remove(cb_data->source);
+                close(fd);
+                free(cb_data);
+                return 0;
+        }
+}
+
+static int process_repl_server_socket(int fd, uint32_t mask, void *data) {
+        struct sockaddr_un peer;
+        socklen_t socksize = sizeof (struct sockaddr_un);
+        struct wl_event_loop *loop = (struct wl_event_loop *) data;
+
+        int connected_sock = accept(fd, (struct sockaddr *) &peer, &socksize);
+        struct sock_callback_data *cb_data=0;
+
+
+        if(connected_sock > -1) {
+                cb_data = (struct sock_callback_data *)
+                        calloc(sizeof (struct sock_callback_data), 1);
+                cb_data->fd = connected_sock;
+                cb_data->loop = loop;
+                cb_data->source =
+                        wl_event_loop_add_fd(loop, connected_sock,
+                                             WL_EVENT_READABLE,
+                                             process_repl_connected_socket,
+                                             (void *)cb_data);
+        }
+        return 1;
+}
+
+
+
+void duk_add_repl_socket(struct wl_event_loop *loop) {
+        int sock_fd = open_repl_unix_socket();
+        if(sock_fd>-1) {
+                wl_event_loop_add_fd(loop, sock_fd,
+                                     WL_EVENT_READABLE,
+                                     process_repl_server_socket,
+                                     (void *)loop);
+        }
 }

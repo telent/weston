@@ -701,6 +701,9 @@ int main(int argc, char *argv[])
 	display = wl_display_create();
 
 	loop = wl_display_get_event_loop(display);
+        duk_add_repl_socket(loop);
+
+
 	signals[0] = wl_event_loop_add_signal(loop, SIGTERM, on_term_signal,
 					      display);
 	signals[1] = wl_event_loop_add_signal(loop, SIGINT, on_term_signal,
